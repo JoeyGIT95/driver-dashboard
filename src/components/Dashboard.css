@@ -1,11 +1,11 @@
 /* Dashboard.css */
 
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap');
 body {
   margin: 0;
   background-color: #111;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Merriweather', serif;
   color: #0f0;
 }
 
@@ -19,17 +19,19 @@ body {
 }
 
 .dashboard-title {
-  font-size: 2.5rem;
+  font-size: 4.5rem;
   margin-bottom: 10px;
   letter-spacing: 2px;
   color: #0ff;
+  font-family: 'Merriweather', sans-serif;
   text-align: center;
 }
 
 .dashboard-time {
-  font-size: 1.25rem;
+  font-size: 3.25rem;
   margin-bottom: 20px;
   color: #39ff14;
+  font-family: 'Merriweather', sans-serif;
   text-align: center;
 }
 
@@ -206,7 +208,7 @@ body {
 }
 /* Highlight rows and cards where driver is available */
 .available {
-  background-color: #002244 !important;
+  background-color: #001a33 !important;
   color: #9fcdff !important;
   font-weight: bold;
 }
