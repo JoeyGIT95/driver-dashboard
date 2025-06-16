@@ -4,33 +4,37 @@ import "./Dashboard.css";
 export default function Dashboard() {
   const [rows, setRows] = useState([]);
   const [now, setNow] = useState(new Date());
-  const [viewMode, setViewMode] = useState("table"); // "table" or "card"
+  const [viewMode, setViewMode] = useState("table");
 
-  useEffect(() => {
-  const fetchData = () => {
-    fetch("https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec")
-      .then((res) => res.json())
-      .then((response) => {
-        if (response.data && Array.isArray(response.data)) {
-          setRows(response.data);
-        } else if (Array.isArray(response)) {
-          setRows(response);
-        } else {
-          console.error("Unexpected response format:", response);
-        }
-      });
+  const getTeam = (driverName) => {
+    if (!driverName) return "Unknown";
+    const lower = driverName.toLowerCase();
+    if (lower.includes("velu") || lower.includes("raja")) return "Penjuru";
+    return "Changi";
   };
 
-  fetchData(); // fetch once at mount
-  const interval = setInterval(fetchData, 1000); // fetch every 1 second
-  return () => clearInterval(interval); // cleanup on unmount
-}, []);
+  useEffect(() => {
+    const fetchData = () => {
+      fetch("https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec")
+        .then((res) => res.json())
+        .then((response) => {
+          if (response.data && Array.isArray(response.data)) {
+            setRows(response.data);
+          } else if (Array.isArray(response)) {
+            setRows(response);
+          } else {
+            console.error("Unexpected response format:", response);
+          }
+        });
+    };
 
+    fetchData();
+    const interval = setInterval(fetchData, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
+    const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -63,6 +67,7 @@ export default function Dashboard() {
             <thead>
               <tr>
                 <th>Driver</th>
+                <th>Team</th>
                 <th>Current Task</th>
                 <th>Task Period</th>
                 <th>Next Task</th>
@@ -70,54 +75,53 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-  {rows.length > 0 ? (
-    rows.map((row, i) => (
-      <tr
-        key={i}
-        className={
-          row["Current Task"] && row["Current Task"].toLowerCase() === "available"
-            ? "available"
-            : ""
-        }
-      >
-        <td>{row["Driver"] || "—"}</td>
-        <td>{row["Current Task"] || "—"}</td>
-        <td>{row["Task Period"] || "—"}</td>
-        <td>{row["Next Task"] || "—"}</td>
-        <td>{row["Next Task Period"] || "—"}</td>
-      </tr>
-    ))
-  ) : (
-    <tr>
-      <td colSpan="5">Loading...</td>
-    </tr>
-  )}
-</tbody>
-
+              {rows.length > 0 ? (
+                rows.map((row, i) => (
+                  <tr
+                    key={i}
+                    className={
+                      row["Current Task"]?.toLowerCase() === "available" ? "available" : ""
+                    }
+                  >
+                    <td>{row["Driver"] || "—"}</td>
+                    <td>{getTeam(row["Driver"])}</td>
+                    <td>{row["Current Task"] || "—"}</td>
+                    <td>{row["Task Period"] || "—"}</td>
+                    <td>{row["Next Task"] || "—"}</td>
+                    <td>{row["Next Task Period"] || "—"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6">Loading...</td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       ) : (
         <div className="card-container">
-  {rows.length > 0 ? (
-    rows.map((row, i) => {
-      const isAvailable = row["Current Task"]?.toLowerCase() === "available";
-      return (
-        <div
-          key={i}
-          className={`driver-card ${isAvailable ? "available" : ""}`}
-        >
-          <h2>{row["Driver"] || "—"}</h2>
-          <p><strong>Current Task:</strong> {row["Current Task"] || "—"}</p>
-          <p><strong>Task Period:</strong> {row["Task Period"] || "—"}</p>
-          <p><strong>Next Task:</strong> {row["Next Task"] || "—"}</p>
-          <p><strong>Next Task Period:</strong> {row["Next Task Period"] || "—"}</p>
+          {rows.length > 0 ? (
+            rows.map((row, i) => {
+              const isAvailable = row["Current Task"]?.toLowerCase() === "available";
+              return (
+                <div
+                  key={i}
+                  className={`driver-card ${isAvailable ? "available" : ""}`}
+                >
+                  <h2>{row["Driver"] || "—"}</h2>
+                  <p><strong>Team:</strong> {getTeam(row["Driver"])}</p>
+                  <p><strong>Current Task:</strong> {row["Current Task"] || "—"}</p>
+                  <p><strong>Task Period:</strong> {row["Task Period"] || "—"}</p>
+                  <p><strong>Next Task:</strong> {row["Next Task"] || "—"}</p>
+                  <p><strong>Next Task Period:</strong> {row["Next Task Period"] || "—"}</p>
+                </div>
+              );
+            })
+          ) : (
+            <p className="loading-text">Loading...</p>
+          )}
         </div>
-      );
-    })
-  ) : (
-    <p className="loading-text">Loading...</p>
-  )}
-</div>
       )}
     </div>
   );
