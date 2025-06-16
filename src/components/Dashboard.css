@@ -114,3 +114,105 @@ body {
     border: none;
   }
 }
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.driver-card {
+  background-color: #000;
+  border: 1px solid #0ff;
+  border-radius: 8px;
+  padding: 16px;
+  width: 300px;
+  color: #0f0;
+  box-shadow: 0 0 8px #0ff;
+  font-size: 0.95rem;
+}
+
+.driver-card h2 {
+  font-size: 1.1rem;
+  color: #0ff;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.driver-card p {
+  margin: 4px 0;
+  word-break: break-word;
+}
+
+.loading-text {
+  text-align: center;
+  font-size: 1rem;
+  color: #888;
+}
+.view-toggle {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.view-toggle button {
+  background-color: #000;
+  border: 1px solid #0ff;
+  color: #0ff;
+  padding: 8px 16px;
+  margin: 0 5px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.view-toggle button:hover {
+  background-color: #0ff;
+  color: #000;
+}
+
+.view-toggle .active {
+  background-color: #0ff;
+  color: #000;
+  font-weight: bold;
+}
+.driver-card {
+  background-color: #000;
+  border: 1px solid #0f0;
+  color: #0f0;
+  padding: 15px;
+  margin: 10px auto;
+  border-radius: 8px;
+  box-shadow: 0 0 8px #0f0;
+  max-width: 400px;
+}
+
+.driver-card.available {
+  border-color: #0ff;
+  box-shadow: 0 0 15px #0ff;
+  background-color: #001a1a;
+    color: #0ff;
+  text-shadow: 0 0 5px #0ff;
+}
+.dashboard-table tbody tr.available {
+  background-color: #002244; /* Deep navy-blue tone */
+  color: #9fcdff;            /* Soft blue text */
+  font-weight: bold;
+  border-left: 4px solid #004080; /* Slightly brighter blue edge */
+}
+/* Highlight rows and cards where driver is available */
+.available {
+  background-color: #002244 !important;
+  color: #9fcdff !important;
+  font-weight: bold;
+}
+
+/* Optional: stronger highlight for card borders */
+.driver-card.available {
+  border-left: 4px solid #004080;
+  box-shadow: 0 0 8px rgba(0, 102, 204, 0.4);
+}
