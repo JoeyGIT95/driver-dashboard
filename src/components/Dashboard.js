@@ -1,3 +1,4 @@
+// Dashboard.js
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
 
@@ -6,11 +7,29 @@ export default function Dashboard() {
   const [now, setNow] = useState(new Date());
   const [viewMode, setViewMode] = useState("table");
 
+  const vehicleTypes = {
+    PD1781L: "Van",
+    YQ766M: "Lorry",
+    YN9270H: "Lorry",
+    YR2327D: "Lorry",
+    PD2340U: "Van",
+    PD1164T: "Van",
+    PD2814U: "Minibus",
+    SMY1362M: "SUV",
+  };
+
   const getTeam = (driverName) => {
     if (!driverName) return "Unknown";
     const lower = driverName.toLowerCase();
     if (lower.includes("velu") || lower.includes("raja")) return "Penjuru";
     return "Changi";
+  };
+
+  const getVehicleType = (driverName) => {
+    const match = driverName.match(/\(([^)]+)\)/);
+    if (!match) return "—";
+    const plate = match[1].toUpperCase().replace(/\s/g, "");
+    return vehicleTypes[plate] || "—";
   };
 
   useEffect(() => {
@@ -67,6 +86,7 @@ export default function Dashboard() {
             <thead>
               <tr>
                 <th>Driver</th>
+                <th>Vehicle</th>
                 <th>Team</th>
                 <th>Current Task</th>
                 <th>Task Period</th>
@@ -84,6 +104,7 @@ export default function Dashboard() {
                     }
                   >
                     <td>{row["Driver"] || "—"}</td>
+                    <td>{getVehicleType(row["Driver"])}</td>
                     <td>{getTeam(row["Driver"])}</td>
                     <td>{row["Current Task"] || "—"}</td>
                     <td>{row["Task Period"] || "—"}</td>
@@ -93,7 +114,7 @@ export default function Dashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6">Loading...</td>
+                  <td colSpan="7">Loading...</td>
                 </tr>
               )}
             </tbody>
@@ -109,7 +130,9 @@ export default function Dashboard() {
                   key={i}
                   className={`driver-card ${isAvailable ? "available" : ""}`}
                 >
-                  <h2>{row["Driver"] || "—"}</h2>
+                  <h2>{row["Driver"] || "—"}
+                    <div className="vehicle-type">{getVehicleType(row["Driver"])}</div>
+                  </h2>
                   <p><strong>Team:</strong> {getTeam(row["Driver"])}</p>
                   <p><strong>Current Task:</strong> {row["Current Task"] || "—"}</p>
                   <p><strong>Task Period:</strong> {row["Task Period"] || "—"}</p>
