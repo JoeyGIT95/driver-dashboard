@@ -32,6 +32,11 @@ export default function Dashboard() {
     return vehicleTypes[plate] || "—";
   };
 
+  const isRestTime = () => {
+    const hour = now.getHours();
+    return hour >= 23 || hour < 6;
+  };
+
   useEffect(() => {
     const fetchData = () => {
       fetch("https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec")
@@ -96,22 +101,24 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {rows.length > 0 ? (
-                rows.map((row, i) => (
-                  <tr
-                    key={i}
-                    className={
-                      row["Current Task"]?.toLowerCase() === "available" ? "available" : ""
-                    }
-                  >
-                    <td>{row["Driver"] || "—"}</td>
-                    <td>{getVehicleType(row["Driver"])}</td>
-                    <td>{getTeam(row["Driver"])}</td>
-                    <td>{row["Current Task"] || "—"}</td>
-                    <td>{row["Task Period"] || "—"}</td>
-                    <td>{row["Next Task"] || "—"}</td>
-                    <td>{row["Next Task Period"] || "—"}</td>
-                  </tr>
-                ))
+                rows.map((row, i) => {
+                  const rest = isRestTime();
+                  const isAvailable = !rest && row["Current Task"]?.toLowerCase() === "available";
+                  return (
+                    <tr
+                      key={i}
+                      className={isAvailable ? "available" : rest ? "rest-hours" : ""}
+                    >
+                      <td>{row["Driver"] || "—"}</td>
+                      <td>{getVehicleType(row["Driver"])}</td>
+                      <td>{getTeam(row["Driver"])}</td>
+                      <td>{rest ? "Unavailable (Rest Hours)" : (row["Current Task"] || "—")}</td>
+                      <td>{row["Task Period"] || "—"}</td>
+                      <td>{row["Next Task"] || "—"}</td>
+                      <td>{row["Next Task Period"] || "—"}</td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="7">Loading...</td>
@@ -124,17 +131,18 @@ export default function Dashboard() {
         <div className="card-container">
           {rows.length > 0 ? (
             rows.map((row, i) => {
-              const isAvailable = row["Current Task"]?.toLowerCase() === "available";
+              const rest = isRestTime();
+              const isAvailable = !rest && row["Current Task"]?.toLowerCase() === "available";
               return (
                 <div
                   key={i}
-                  className={`driver-card ${isAvailable ? "available" : ""}`}
+                  className={`driver-card ${isAvailable ? "available" : rest ? "rest-hours" : ""}`}
                 >
                   <h2>{row["Driver"] || "—"}
                     <div className="vehicle-type">{getVehicleType(row["Driver"])}</div>
                   </h2>
                   <p><strong>Team:</strong> {getTeam(row["Driver"])}</p>
-                  <p><strong>Current Task:</strong> {row["Current Task"] || "—"}</p>
+                  <p><strong>Current Task:</strong> {rest ? "Unavailable (Rest Hours)" : (row["Current Task"] || "—")}</p>
                   <p><strong>Task Period:</strong> {row["Task Period"] || "—"}</p>
                   <p><strong>Next Task:</strong> {row["Next Task"] || "—"}</p>
                   <p><strong>Next Task Period:</strong> {row["Next Task Period"] || "—"}</p>

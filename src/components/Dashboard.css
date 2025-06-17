@@ -165,7 +165,10 @@ body {
   margin-top: 2px;
   font-weight: normal;
 }
-
+.rest-hours {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
 
 /* Responsive */
 @media (max-width: 600px) {
