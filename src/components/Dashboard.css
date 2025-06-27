@@ -169,6 +169,54 @@ body {
   opacity: 0.4;
   filter: grayscale(0.7);
 }
+.map-view {
+  height: 600px; /* or 100vh for full screen */
+  width: 100%;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.marker-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-25px); /* adjust to center circle below label */
+}
+
+.marker-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  background-color: black;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.marker-circle {
+  width: 12px;
+  height: 12px;
+  background-color: red;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.custom-marker.moving .marker-circle {
+  animation: pulse 1s infinite;
+  background-color: limegreen;
+  border-color: black;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
 
 /* Responsive */
 @media (max-width: 600px) {

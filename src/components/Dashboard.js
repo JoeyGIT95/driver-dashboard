@@ -1,9 +1,13 @@
 // Dashboard.js
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 export default function Dashboard() {
   const [rows, setRows] = useState([]);
+  const [gps, setGps] = useState([]);
   const [now, setNow] = useState(new Date());
   const [viewMode, setViewMode] = useState("table");
 
@@ -26,7 +30,7 @@ export default function Dashboard() {
   };
 
   const getVehicleType = (driverName) => {
-    const match = driverName.match(/\(([^)]+)\)/);
+    const match = driverName?.match(/\(([^)]+)\)/);
     if (!match) return "—";
     const plate = match[1].toUpperCase().replace(/\s/g, "");
     return vehicleTypes[plate] || "—";
@@ -52,8 +56,19 @@ export default function Dashboard() {
         });
     };
 
+    const fetchGps = () => {
+      fetch("http://34.133.154.63:8000/gps.json")
+        .then(res => res.json())
+        .then(data => setGps(data))
+        .catch(err => console.error("GPS fetch failed", err));
+    };
+
     fetchData();
-    const interval = setInterval(fetchData, 1000);
+    fetchGps();
+    const interval = setInterval(() => {
+      fetchData();
+      fetchGps();
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -83,9 +98,10 @@ export default function Dashboard() {
       <div className="view-toggle">
         <button onClick={() => setViewMode("table")} className={viewMode === "table" ? "active" : ""}>Table View</button>
         <button onClick={() => setViewMode("card")} className={viewMode === "card" ? "active" : ""}>Card View</button>
+        <button onClick={() => setViewMode("map")} className={viewMode === "map" ? "active" : ""}>Map View</button>
       </div>
 
-      {viewMode === "table" ? (
+      {viewMode === "table" && (
         <div className="dashboard-container">
           <table className="dashboard-table">
             <thead>
@@ -100,58 +116,95 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {rows.length > 0 ? (
-                rows.map((row, i) => {
-                  const rest = isRestTime();
-                  const isAvailable = !rest && row["Current Task"]?.toLowerCase() === "available";
-                  return (
-                    <tr
-                      key={i}
-                      className={isAvailable ? "available" : rest ? "rest-hours" : ""}
-                    >
-                      <td>{row["Driver"] || "—"}</td>
-                      <td>{getVehicleType(row["Driver"])}</td>
-                      <td>{getTeam(row["Driver"])}</td>
-                      <td>{rest ? "Unavailable (Rest Hours)" : (row["Current Task"] || "—")}</td>
-                      <td>{row["Task Period"] || "—"}</td>
-                      <td>{row["Next Task"] || "—"}</td>
-                      <td>{row["Next Task Period"] || "—"}</td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="7">Loading...</td>
-                </tr>
-              )}
+              {rows.length > 0 ? rows.map((row, i) => {
+                const rest = isRestTime();
+                const isAvailable = !rest && row["Current Task"]?.toLowerCase() === "available";
+                return (
+                  <tr key={i} className={isAvailable ? "available" : rest ? "rest-hours" : ""}>
+                    <td>{row["Driver"] || "—"}</td>
+                    <td>{getVehicleType(row["Driver"])}</td>
+                    <td>{getTeam(row["Driver"])}</td>
+                    <td>{rest ? "Unavailable (Rest Hours)" : (row["Current Task"] || "—")}</td>
+                    <td>{row["Task Period"] || "—"}</td>
+                    <td>{row["Next Task"] || "—"}</td>
+                    <td>{row["Next Task Period"] || "—"}</td>
+                  </tr>
+                );
+              }) : <tr><td colSpan="7">Loading...</td></tr>}
             </tbody>
           </table>
         </div>
-      ) : (
+      )}
+
+      {viewMode === "card" && (
         <div className="card-container">
-          {rows.length > 0 ? (
-            rows.map((row, i) => {
-              const rest = isRestTime();
-              const isAvailable = !rest && row["Current Task"]?.toLowerCase() === "available";
-              return (
-                <div
-                  key={i}
-                  className={`driver-card ${isAvailable ? "available" : rest ? "rest-hours" : ""}`}
-                >
-                  <h2>{row["Driver"] || "—"}
-                    <div className="vehicle-type">{getVehicleType(row["Driver"])}</div>
-                  </h2>
-                  <p><strong>Team:</strong> {getTeam(row["Driver"])}</p>
-                  <p><strong>Current Task:</strong> {rest ? "Unavailable (Rest Hours)" : (row["Current Task"] || "—")}</p>
-                  <p><strong>Task Period:</strong> {row["Task Period"] || "—"}</p>
-                  <p><strong>Next Task:</strong> {row["Next Task"] || "—"}</p>
-                  <p><strong>Next Task Period:</strong> {row["Next Task Period"] || "—"}</p>
-                </div>
-              );
-            })
-          ) : (
-            <p className="loading-text">Loading...</p>
-          )}
+          {rows.length > 0 ? rows.map((row, i) => {
+            const rest = isRestTime();
+            const isAvailable = !rest && row["Current Task"]?.toLowerCase() === "available";
+            return (
+              <div key={i} className={`driver-card ${isAvailable ? "available" : rest ? "rest-hours" : ""}`}>
+                <h2>{row["Driver"] || "—"}
+                  <div className="vehicle-type">{getVehicleType(row["Driver"])}</div>
+                </h2>
+                <p><strong>Team:</strong> {getTeam(row["Driver"])}</p>
+                <p><strong>Current Task:</strong> {rest ? "Unavailable (Rest Hours)" : (row["Current Task"] || "—")}</p>
+                <p><strong>Task Period:</strong> {row["Task Period"] || "—"}</p>
+                <p><strong>Next Task:</strong> {row["Next Task"] || "—"}</p>
+                <p><strong>Next Task Period:</strong> {row["Next Task Period"] || "—"}</p>
+              </div>
+            );
+          }) : <p className="loading-text">Loading...</p>}
+        </div>
+      )}
+
+      {viewMode === "map" && (
+        <div className="map-view">
+          {gps.length > 0 ? (
+            <MapContainer
+  center={[1.3521, 103.8198]} // Center of Singapore
+  zoom={11} // Wider zoom to show whole SG
+  style={{ height: "100%", width: "100%" }}
+  scrollWheelZoom={true}
+>
+              <>
+                <TileLayer
+                  attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {gps
+				  .filter((v) => !["SLW357H", "SNS2521J"].includes((v.label || "").toUpperCase()))
+				  .map((v, i) => {
+				    const isMoving = parseFloat(v.speed) > 0;
+				
+				    return (
+				      <Marker
+				        key={i}
+				        position={[v.latitude, v.longitude]}
+				        icon={L.divIcon({
+				          className: `custom-marker ${isMoving ? "moving" : ""}`,
+				          html: `
+				            <div class="marker-wrapper">
+				              <div class="marker-label">${v.label || "?"}</div>
+				              <div class="marker-circle"></div>
+				            </div>
+				          `
+				        })}
+				      >
+				        <Popup>
+				          <strong>{v.label || "Unnamed Vehicle"}</strong><br />
+				          Time: {v.timestamp}<br />
+				          Speed: {v.speed} km/h<br />
+				          Road: {v.road || "—"}<br />
+				          Status: {v.event}
+				        </Popup>
+				      </Marker>
+				    );
+				  })}
+
+
+              </>
+            </MapContainer>
+          ) : <p>Loading GPS data...</p>}
         </div>
       )}
     </div>
