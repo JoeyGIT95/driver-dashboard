@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import Dashboard from "./components/Dashboard";
+import Login from "./Login";
 
 function App() {
-  return <Dashboard />;
+  const [user, setUser] = useState(null);
+
+  if (!user) {
+    return <Login onLogin={setUser} />;
+  }
+
+  return <Dashboard user={user} />;
 }
 
 export default App;

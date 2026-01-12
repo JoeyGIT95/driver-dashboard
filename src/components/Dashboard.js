@@ -1,15 +1,41 @@
-// Dashboard.js
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import buildingMarkers from "../data/building-markers.json";
+import { useMap } from "react-leaflet";
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import DriverView from "./DriverView";
 
-export default function Dashboard() {
+function ZoomWatcher({ setZoomLevel }) {
+  const map = useMap();
+  useEffect(() => {
+    const updateZoom = () => setZoomLevel(map.getZoom());
+    map.on("zoom", updateZoom);
+    return () => map.off("zoom", updateZoom);
+  }, [map, setZoomLevel]);
+  return null;
+}
+
+const getSecondsToNext5Min = () => {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+  const next5 = Math.ceil((minutes + 1) / 5) * 5;
+  const deltaMinutes = next5 - minutes;
+  return deltaMinutes * 60 - seconds;
+};
+
+export default function Dashboard({ user }) {
+  console.log("🟢 Logged in as:", user.email);
   const [rows, setRows] = useState([]);
   const [gps, setGps] = useState([]);
   const [now, setNow] = useState(new Date());
   const [viewMode, setViewMode] = useState("table");
+  const [gpsCountdown, setGpsCountdown] = useState(getSecondsToNext5Min());
+  const [zoomLevel, setZoomLevel] = useState(11);
+
 
   const vehicleTypes = {
     PD1781L: "Van",
@@ -28,6 +54,47 @@ export default function Dashboard() {
     if (lower.includes("velu") || lower.includes("raja")) return "Penjuru";
     return "Changi";
   };
+	const collectAndSendVisitorInfo = async () => {
+	  try {
+	    // Load FingerprintJS
+	    const fp = await FingerprintJS.load();
+	    const result = await fp.get();
+	
+	    const fingerprintId = result.visitorId;
+	    const userAgent = navigator.userAgent;
+	    const platform = navigator.platform;
+	    const screenSize = `${window.screen.width}x${window.screen.height}`;
+	
+		const payload = {
+		  email: user.email,
+		  displayName: user.name || user.displayName || "Unknown",
+		  fingerprintId,
+		  userAgent,
+		  platform,
+		  screenSize,
+		};
+	
+	    console.log("📱 Visitor Info Collected:", payload); // Debugging
+	
+	    // Send to Google Apps Script backend
+	    fetch("https://driver-proxy.vercel.app/api/google-sheet", {
+		  method: "POST",
+		  headers: {
+		    "Content-Type": "application/json",
+		  },
+		  body: JSON.stringify(payload),
+		})
+
+		.then(response => {
+	      console.log("✅ Visitor info sent successfully");
+	    }).catch(error => {
+	      console.error("❌ Error sending visitor info:", error);
+	    });
+	
+	  } catch (error) {
+	    console.error("❌ FingerprintJS failed:", error);
+	  }
+	};
 
   const getVehicleType = (driverName) => {
     const match = driverName?.match(/\(([^)]+)\)/);
@@ -36,12 +103,15 @@ export default function Dashboard() {
     return vehicleTypes[plate] || "—";
   };
 
-  const isRestTime = () => {
-    const hour = now.getHours();
-    return hour >= 23 || hour < 6;
-  };
+	const isRestTime = () => {
+	  if (!now || isNaN(now.getTime())) return false; // fallback if invalid
+	  const hour = now.getHours();
+	  return hour >= 23 || hour < 6;
+	};
 
   useEffect(() => {
+	collectAndSendVisitorInfo();
+	  
     const fetchData = () => {
       fetch("https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec")
         .then((res) => res.json())
@@ -57,7 +127,7 @@ export default function Dashboard() {
     };
 
     const fetchGps = () => {
-      fetch("http://34.133.154.63:8000/gps.json")
+      fetch("https://cat1-proxy.vercel.app/api/gps")
         .then(res => res.json())
         .then(data => setGps(data))
         .catch(err => console.error("GPS fetch failed", err));
@@ -65,15 +135,43 @@ export default function Dashboard() {
 
     fetchData();
     fetchGps();
-    const interval = setInterval(() => {
+    setGpsCountdown(0);
+
+    const nowForSync = new Date();
+    const msToNextMinute = (60 - nowForSync.getSeconds()) * 1000;
+
+    const firstTimeout = setTimeout(() => {
       fetchData();
       fetchGps();
+      setGpsCountdown(0);
+
+      const interval = setInterval(() => {
+        fetchData();
+        fetchGps();
+        setGpsCountdown(0);
+      }, 60 * 1000);
+
+      window.gpsFetchInterval = interval;
+    }, msToNextMinute);
+
+    return () => {
+      clearTimeout(firstTimeout);
+      clearInterval(window.gpsFetchInterval);
+    };
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGpsCountdown(getSecondsToNext5Min());
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -99,8 +197,14 @@ export default function Dashboard() {
         <button onClick={() => setViewMode("table")} className={viewMode === "table" ? "active" : ""}>Table View</button>
         <button onClick={() => setViewMode("card")} className={viewMode === "card" ? "active" : ""}>Card View</button>
         <button onClick={() => setViewMode("map")} className={viewMode === "map" ? "active" : ""}>Map View</button>
+		<button onClick={() => setViewMode("driver")} className={viewMode === "driver" ? "active" : ""}>Driver View</button>
       </div>
-
+		
+			{viewMode === "driver" && (
+			  <div className="driver-view">
+			    <DriverView currentEmail={user?.email || ""} />
+			  </div>
+			)}
       {viewMode === "table" && (
         <div className="dashboard-container">
           <table className="dashboard-table">
@@ -157,56 +261,18 @@ export default function Dashboard() {
         </div>
       )}
 
-      {viewMode === "map" && (
-        <div className="map-view">
-          {gps.length > 0 ? (
-            <MapContainer
-  center={[1.3521, 103.8198]} // Center of Singapore
-  zoom={11} // Wider zoom to show whole SG
-  style={{ height: "100%", width: "100%" }}
-  scrollWheelZoom={true}
->
-              <>
-                <TileLayer
-                  attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {gps
-				  .filter((v) => !["SLW357H", "SNS2521J"].includes((v.label || "").toUpperCase()))
-				  .map((v, i) => {
-				    const isMoving = parseFloat(v.speed) > 0;
-				
-				    return (
-				      <Marker
-				        key={i}
-				        position={[v.latitude, v.longitude]}
-				        icon={L.divIcon({
-				          className: `custom-marker ${isMoving ? "moving" : ""}`,
-				          html: `
-				            <div class="marker-wrapper">
-				              <div class="marker-label">${v.label || "?"}</div>
-				              <div class="marker-circle"></div>
-				            </div>
-				          `
-				        })}
-				      >
-				        <Popup>
-				          <strong>{v.label || "Unnamed Vehicle"}</strong><br />
-				          Time: {v.timestamp}<br />
-				          Speed: {v.speed} km/h<br />
-				          Road: {v.road || "—"}<br />
-				          Status: {v.event}
-				        </Popup>
-				      </Marker>
-				    );
-				  })}
-
-
-              </>
-            </MapContainer>
-          ) : <p>Loading GPS data...</p>}
-        </div>
-      )}
-    </div>
-  );
+		{viewMode === "map" && (
+		  <div className="map-under-construction">
+		    <h2>🛠 Map View — Under Construction</h2>
+		    <p>
+		      Live GPS is temporarily unavailable. We’ll bring this back once the GPS service is restored.
+		    </p>
+		    <ul>
+		      <li>Table, Card, and Driver views remain fully functional.</li>
+		      <li>No impact on task data from Google Sheets.</li>
+		    </ul>
+		  </div>
+		)}
+      </div>
+    );
 }
