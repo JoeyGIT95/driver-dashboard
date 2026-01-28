@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+
 
 const GOOGLE_CLIENT_ID = "373414640078-vamci9j598ake37bdpgk9qlhiacto25s.apps.googleusercontent.com";
 
@@ -28,12 +29,12 @@ export default function Login({ onLogin }) {
     };
 }, [handleCredentialResponse]);
 
-  function handleCredentialResponse(response) {
-    const decoded = parseJwt(response.credential);
-    console.log("✅ Google User:", decoded);
-    setUser(decoded);
-    if (onLogin) onLogin(decoded);
-  }
+const handleCredentialResponse = useCallback((response) => {
+  const decoded = parseJwt(response.credential);
+  console.log("✅ Google User:", decoded);
+  setUser(decoded);
+  if (onLogin) onLogin(decoded);
+}, [onLogin]);
 
   function parseJwt(token) {
     const base64Url = token.split('.')[1];
