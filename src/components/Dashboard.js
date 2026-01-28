@@ -127,49 +127,6 @@ useEffect(() => {
   collectAndSendVisitorInfo();
 }, [collectAndSendVisitorInfo]);
 
-	  
-    const fetchData = () => {
-      fetch("https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec")
-        .then((res) => res.json())
-        .then((response) => {
-          if (response.data && Array.isArray(response.data)) {
-            setRows(response.data);
-          } else if (Array.isArray(response)) {
-            setRows(response);
-          } else {
-            console.error("Unexpected response format:", response);
-          }
-        });
-    };
-
-
-
-    fetchData();
-    fetchGps();
-    setGpsCountdown(0);
-
-    const nowForSync = new Date();
-    const msToNextMinute = (60 - nowForSync.getSeconds()) * 1000;
-
-    const firstTimeout = setTimeout(() => {
-      fetchData();
-      fetchGps();
-      setGpsCountdown(0);
-
-      const interval = setInterval(() => {
-        fetchData();
-        fetchGps();
-        setGpsCountdown(0);
-      }, 60 * 1000);
-
-      window.gpsFetchInterval = interval;
-    }, msToNextMinute);
-
-    return () => {
-      clearTimeout(firstTimeout);
-      clearInterval(window.gpsFetchInterval);
-    };
-  }, []);
 const fetchGps = async () => {
   try {
     const fbRes = await fetch(FIREBASE_URL, { cache: "no-store" });
@@ -184,26 +141,67 @@ const fetchGps = async () => {
     );
 
     const data = await gpsRes.json();
-    setGps(data);
+    setGps(Array.isArray(data) ? data : []);
   } catch (err) {
     console.error("GPS fetch failed:", err);
   }
 };
-useEffect(() => {
-  fetchGps(); // initial fetch
 
-  const interval = setInterval(() => {
-    setGpsCountdown((prev) => {
-      if (prev <= 1) {
-        fetchGps();
-        return REFRESH_INTERVAL;
-      }
-      return prev - 1;
-    });
+const fetchData = async () => {
+  try {
+    const res = await fetch(
+      "https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec",
+      { cache: "no-store" }
+    );
+    const response = await res.json();
+
+    if (response.data && Array.isArray(response.data)) setRows(response.data);
+    else if (Array.isArray(response)) setRows(response);
+    else console.error("Unexpected response format:", response);
+  } catch (e) {
+    console.error("fetchData failed:", e);
+  }
+};
+
+// ✅ ONE refresh loop only: sync to next minute, then refresh every 60s
+useEffect(() => {
+  let intervalId = null;
+  let firstTimeoutId = null;
+
+  const run = async () => {
+    await fetchData();
+    await fetchGps();
+    setGpsCountdown(REFRESH_INTERVAL);
+  };
+
+  run();
+
+  const nowForSync = new Date();
+  const msToNextMinute = (60 - nowForSync.getSeconds()) * 1000;
+
+  firstTimeoutId = setTimeout(() => {
+    run();
+
+    intervalId = setInterval(() => {
+      run();
+    }, 60 * 1000);
+  }, msToNextMinute);
+
+  return () => {
+    if (firstTimeoutId) clearTimeout(firstTimeoutId);
+    if (intervalId) clearInterval(intervalId);
+  };
+}, []);
+
+// ✅ Countdown is display-only (does not fetch)
+useEffect(() => {
+  const t = setInterval(() => {
+    setGpsCountdown((prev) => (prev <= 1 ? REFRESH_INTERVAL : prev - 1));
   }, 1000);
 
-  return () => clearInterval(interval);
+  return () => clearInterval(t);
 }, []);
+
 
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
