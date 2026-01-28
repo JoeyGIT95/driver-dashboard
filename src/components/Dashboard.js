@@ -7,7 +7,25 @@ import buildingMarkers from "../data/building-markers.json";
 import { useMap } from "react-leaflet";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import DriverView from "./DriverView";
+// ✅ Fix broken default marker icons in React/Webpack
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+const FIREBASE_URL =
+  "https://ytc-gps-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
 
+const REFRESH_INTERVAL = 60; // seconds
+const makeDotIcon = (sizePx = 10) =>
+  L.divIcon({
+    className: "gps-dot-icon",
+    iconSize: [sizePx, sizePx],
+  });
 function ZoomWatcher({ setZoomLevel }) {
   const map = useMap();
   useEffect(() => {
@@ -126,12 +144,9 @@ export default function Dashboard({ user }) {
         });
     };
 
-    const fetchGps = () => {
-      fetch("https://cat1-proxy.vercel.app/api/gps")
-        .then(res => res.json())
-        .then(data => setGps(data))
-        .catch(err => console.error("GPS fetch failed", err));
-    };
+const FIREBASE_URL =
+  "https://ytc-gps-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
+
 
     fetchData();
     fetchGps();
@@ -159,13 +174,41 @@ export default function Dashboard({ user }) {
       clearInterval(window.gpsFetchInterval);
     };
   }, []);
+const fetchGps = async () => {
+  try {
+    const fbRes = await fetch(FIREBASE_URL, { cache: "no-store" });
+    const fb = await fbRes.json();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGpsCountdown(getSecondsToNext5Min());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    const baseUrl = fb?.tunnel_url;
+    if (!baseUrl) return;
+
+    const gpsRes = await fetch(
+      `${baseUrl}/gps.json?key=${process.env.REACT_APP_GPS_KEY}`,
+      { cache: "no-store" }
+    );
+
+    const data = await gpsRes.json();
+    setGps(data);
+  } catch (err) {
+    console.error("GPS fetch failed:", err);
+  }
+};
+useEffect(() => {
+  fetchGps(); // initial fetch
+
+  const interval = setInterval(() => {
+    setGpsCountdown((prev) => {
+      if (prev <= 1) {
+        fetchGps();
+        return REFRESH_INTERVAL;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, []);
+
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -262,15 +305,83 @@ export default function Dashboard({ user }) {
       )}
 
 		{viewMode === "map" && (
-		  <div className="map-under-construction">
-		    <h2>🛠 Map View — Under Construction</h2>
-		    <p>
-		      Live GPS is temporarily unavailable. We’ll bring this back once the GPS service is restored.
-		    </p>
-		    <ul>
-		      <li>Table, Card, and Driver views remain fully functional.</li>
-		      <li>No impact on task data from Google Sheets.</li>
-		    </ul>
+		  <div className="map-view">
+			<div className="gps-status">
+			  <strong>GPS:</strong> {gps?.length ? `${gps.length} vehicles` : "Loading..."}
+			  <span style={{ marginLeft: 12 }}>
+				Next refresh in: {gpsCountdown}s
+			  </span>
+			</div>
+			<div style={{ color: "#fff", marginBottom: 8 }}>
+			  buildingMarkers: {Array.isArray(buildingMarkers) ? buildingMarkers.length : "not array"}
+			</div>
+			<MapContainer
+			  center={[1.321, 103.99]}
+			  zoom={11}
+			  style={{ height: "70vh", width: "100%" }}
+			>
+			  <ZoomWatcher setZoomLevel={setZoomLevel} />
+
+			  <TileLayer
+				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+				attribution="&copy; OpenStreetMap contributors"
+			  />
+
+{Array.isArray(gps) &&
+  gps
+    .filter((v) => Number.isFinite(Number(v.lat ?? v.latitude)) && Number.isFinite(Number(v.lng ?? v.longitude)))
+    .filter((v) => !["SLW357H", "SNS2521J"].includes(String(v.label || "").toUpperCase()))
+    .map((v, i) => {
+      const lat = Number(v.lat ?? v.latitude);
+      const lng = Number(v.lng ?? v.longitude);
+      const isMoving = Number(v.speed) > 0;
+
+      return (
+        <Marker
+          key={`gps-${i}`}
+          position={[lat, lng]}
+          icon={L.divIcon({
+            className: `custom-marker ${isMoving ? "moving" : ""}`,
+            html: `
+              <div class="marker-wrapper">
+                <div class="marker-label">${v.label || "?"}</div>
+                <div class="marker-circle"></div>
+              </div>
+            `,
+            iconSize: [1, 1], // keeps leaflet happy; visual is HTML
+          })}
+        >
+          <Popup>
+            <strong>{v.label || "Unnamed Vehicle"}</strong><br />
+            Time: {v.timestamp || "-"}<br />
+            Speed: {v.speed ?? "-"} km/h<br />
+            Road: {v.road || "—"}<br />
+          </Popup>
+        </Marker>
+      );
+    })}
+
+{zoomLevel >= 17 &&
+  Array.isArray(buildingMarkers) &&
+  buildingMarkers.map((b, idx) => {
+    const [lat, lng] = b.position;
+
+    return (
+      <Marker
+        key={`label-${idx}`}
+        position={[lat, lng]}
+        interactive={false}
+        icon={L.divIcon({
+          html: `<div class="map-label">${b.name}</div>`,
+          className: "block-label",
+          iconSize: [1, 1],
+        })}
+      />
+    );
+  })}
+
+
+			</MapContainer>
 		  </div>
 		)}
       </div>
