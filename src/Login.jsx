@@ -1,13 +1,28 @@
 import React, { useEffect, useState, useCallback } from "react";
 
-
-const GOOGLE_CLIENT_ID = "373414640078-vamci9j598ake37bdpgk9qlhiacto25s.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID =
+  "373414640078-vamci9j598ake37bdpgk9qlhiacto25s.apps.googleusercontent.com";
 
 export default function Login({ onLogin }) {
   const [user, setUser] = useState(null);
 
+  const parseJwt = (token) => {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(window.atob(base64));
+  };
+
+  const handleCredentialResponse = useCallback(
+    (response) => {
+      const decoded = parseJwt(response.credential);
+      console.log("✅ Google User:", decoded);
+      setUser(decoded);
+      if (onLogin) onLogin(decoded);
+    },
+    [onLogin]
+  );
+
   useEffect(() => {
-    // Load Google Identity Services script
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
@@ -27,20 +42,11 @@ export default function Login({ onLogin }) {
 
       window.google.accounts.id.prompt();
     };
-}, [handleCredentialResponse]);
 
-const handleCredentialResponse = useCallback((response) => {
-  const decoded = parseJwt(response.credential);
-  console.log("✅ Google User:", decoded);
-  setUser(decoded);
-  if (onLogin) onLogin(decoded);
-}, [onLogin]);
-
-  function parseJwt(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(window.atob(base64));
-  }
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [handleCredentialResponse]);
 
   if (user) {
     return (
@@ -52,5 +58,10 @@ const handleCredentialResponse = useCallback((response) => {
     );
   }
 
-  return <div id="google-signin-button" style={{ textAlign: "center", marginTop: "50px" }}></div>;
+  return (
+    <div
+      id="google-signin-button"
+      style={{ textAlign: "center", marginTop: "50px" }}
+    />
+  );
 }
