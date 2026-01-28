@@ -69,49 +69,39 @@ export default function Dashboard({ user }) {
     return "Changi";
   };
 const collectAndSendVisitorInfo = useCallback(async () => {
+  try {
+    const fp = await FingerprintJS.load();
+    const result = await fp.get();
 
+    const fingerprintId = result.visitorId;
+    const userAgent = navigator.userAgent;
+    const platform = navigator.platform;
+    const screenSize = `${window.screen.width}x${window.screen.height}`;
+
+    const payload = {
+      email: user?.email || "",
+      displayName: user?.name || user?.displayName || "Unknown",
+      fingerprintId,
+      userAgent,
+      platform,
+      screenSize,
+    };
+
+    console.log("📱 Visitor Info Collected:", payload);
+
+    await fetch("https://driver-proxy.vercel.app/api/google-sheet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    console.log("✅ Visitor info sent successfully");
+  } catch (error) {
+    console.error("❌ Visitor info failed:", error);
+  }
 }, [user?.email, user?.name, user?.displayName]);
 
-	  try {
-	    // Load FingerprintJS
-	    const fp = await FingerprintJS.load();
-	    const result = await fp.get();
-	
-	    const fingerprintId = result.visitorId;
-	    const userAgent = navigator.userAgent;
-	    const platform = navigator.platform;
-	    const screenSize = `${window.screen.width}x${window.screen.height}`;
-	
-		const payload = {
-		  email: user.email,
-		  displayName: user.name || user.displayName || "Unknown",
-		  fingerprintId,
-		  userAgent,
-		  platform,
-		  screenSize,
-		};
-	
-	    console.log("📱 Visitor Info Collected:", payload); // Debugging
-	
-	    // Send to Google Apps Script backend
-	    fetch("https://driver-proxy.vercel.app/api/google-sheet", {
-		  method: "POST",
-		  headers: {
-		    "Content-Type": "application/json",
-		  },
-		  body: JSON.stringify(payload),
-		})
 
-		.then(response => {
-	      console.log("✅ Visitor info sent successfully");
-	    }).catch(error => {
-	      console.error("❌ Error sending visitor info:", error);
-	    });
-	
-	  } catch (error) {
-	    console.error("❌ FingerprintJS failed:", error);
-	  }
-	};
 
   const getVehicleType = (driverName) => {
     const match = driverName?.match(/\(([^)]+)\)/);
