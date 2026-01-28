@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
 
       window.google.accounts.id.prompt();
     };
-  }, []);
+}, [handleCredentialResponse]);
 
   function handleCredentialResponse(response) {
     const decoded = parseJwt(response.credential);

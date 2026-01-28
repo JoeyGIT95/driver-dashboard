@@ -21,11 +21,7 @@ const FIREBASE_URL =
   "https://ytc-gps-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
 
 const REFRESH_INTERVAL = 60; // seconds
-const makeDotIcon = (sizePx = 10) =>
-  L.divIcon({
-    className: "gps-dot-icon",
-    iconSize: [sizePx, sizePx],
-  });
+
 function ZoomWatcher({ setZoomLevel }) {
   const map = useMap();
   useEffect(() => {
@@ -127,8 +123,10 @@ export default function Dashboard({ user }) {
 	  return hour >= 23 || hour < 6;
 	};
 
-  useEffect(() => {
-	collectAndSendVisitorInfo();
+useEffect(() => {
+  collectAndSendVisitorInfo();
+}, [collectAndSendVisitorInfo]);
+
 	  
     const fetchData = () => {
       fetch("https://script.google.com/macros/s/AKfycbz9TOCv6-5J-sbmREwiSyjc9xg44HC3_h3EVZhEp_MncQspkS-aGeDEX6NwoYs4VT6wsg/exec")
@@ -144,8 +142,6 @@ export default function Dashboard({ user }) {
         });
     };
 
-const FIREBASE_URL =
-  "https://ytc-gps-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
 
 
     fetchData();
