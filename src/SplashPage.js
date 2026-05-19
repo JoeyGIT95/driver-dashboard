@@ -3,35 +3,35 @@ import "./SplashPage.css";
 
 export default function SplashPage({ onContinue }) {
   return (
-    <div className="splash-page">
-      <div className="splash-card">
-        <div className="splash-badge">YTC Logistics</div>
+    <div className="legacy-splash-page">
+      <div className="legacy-splash-card">
+        <div className="legacy-splash-eyebrow">YTC Logistics</div>
 
-        <h1>Driver Dashboard Transition Notice</h1>
+        <div className="legacy-splash-status">Transition Notice</div>
 
-        <p className="splash-main-text">
+        <h1>Driver Dashboard Notice</h1>
+
+        <p className="legacy-splash-lead">
           This Driver Dashboard is now a legacy system and will be discontinued
           progressively.
         </p>
 
-        <p className="splash-sub-text">
+        <div className="legacy-splash-notice">
           During this transition period, the old dashboard will no longer be
           actively updated. Please do not rely on it as the main source for new
           driver tasking or future logistics updates.
-        </p>
-
-        <div className="splash-warning">
-          Please continue using this dashboard only where necessary until the new
-          logistics system is officially released.
         </div>
 
-        <div className="splash-actions single-action">
-          <button className="primary-btn" onClick={onContinue}>
+        <div className="legacy-splash-actions legacy-splash-actions-single">
+          <button className="legacy-splash-primary" onClick={onContinue}>
             Continue to Old Dashboard
           </button>
         </div>
 
-        <p className="splash-footer">
+        <p className="legacy-splash-footer">
+          Please continue using this dashboard only where necessary until the new
+          logistics system is officially released.
+          <br />
           For any clarification, please check with Logistics.
         </p>
       </div>
