@@ -1,159 +1,149 @@
-.legacy-splash-page {
+.splash-page {
   min-height: 100vh;
   width: 100%;
-  box-sizing: border-box;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.2), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.16), transparent 36%),
+    linear-gradient(135deg, #020617 0%, #030712 48%, #07111f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
+  box-sizing: border-box;
   color: #f8fafc;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at 18% 15%, rgba(255, 153, 0, 0.22), transparent 30%),
-    radial-gradient(circle at 85% 75%, rgba(34, 197, 94, 0.16), transparent 34%),
-    linear-gradient(135deg, #080604 0%, #12100e 45%, #050505 100%);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.legacy-splash-card {
+.splash-card {
   width: 100%;
   max-width: 620px;
-  box-sizing: border-box;
-  padding: 34px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 30px;
-  background: rgba(18, 16, 14, 0.92);
-  border: 1px solid rgba(255, 194, 102, 0.22);
+  padding: 38px;
   box-shadow:
-    0 28px 90px rgba(0, 0, 0, 0.56),
-    0 0 42px rgba(255, 153, 0, 0.16);
+    0 28px 90px rgba(0, 0, 0, 0.58),
+    0 0 48px rgba(34, 197, 94, 0.13);
   backdrop-filter: blur(18px);
+  box-sizing: border-box;
 }
 
-.legacy-splash-eyebrow {
+.splash-badge {
   display: inline-flex;
   align-items: center;
-  padding: 7px 12px;
+  width: fit-content;
+  padding: 7px 13px;
   border-radius: 999px;
-  background: rgba(255, 194, 102, 0.1);
-  border: 1px solid rgba(255, 194, 102, 0.34);
-  color: #ffc266;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.42);
+  color: #86efac;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
-.legacy-splash-status {
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.legacy-splash-card h1 {
+.splash-card h1 {
   margin: 0 0 16px;
   color: #ffffff;
-  font-size: clamp(34px, 6vw, 54px);
-  line-height: 1.02;
-  letter-spacing: -0.06em;
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  font-weight: 900;
 }
 
-.legacy-splash-lead {
+.splash-main-text {
   margin: 0;
   color: #e5e7eb;
   font-size: 17px;
   line-height: 1.58;
+  font-weight: 600;
 }
 
-.legacy-splash-notice {
+.splash-sub-text {
+  margin: 16px 0 0;
+  color: #cbd5e1;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.splash-warning {
   margin-top: 24px;
-  padding: 15px 16px;
+  padding: 15px 17px;
   border-radius: 18px;
-  background: rgba(255, 153, 0, 0.1);
-  border: 1px solid rgba(255, 194, 102, 0.32);
-  color: #ffe0ad;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.32);
+  color: #fde68a;
   font-size: 14px;
-  line-height: 1.52;
+  line-height: 1.55;
+  font-weight: 600;
 }
 
-.legacy-splash-actions {
+.splash-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 28px;
+  justify-content: center;
+  margin-top: 30px;
 }
 
-.legacy-splash-actions button {
-  border-radius: 17px;
-  padding: 15px 18px;
+.splash-actions button {
+  border: none;
+  border-radius: 18px;
+  padding: 15px 22px;
   font-size: 15px;
   font-weight: 900;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
 }
 
-.legacy-splash-actions button:hover {
+.splash-actions button:hover {
   transform: translateY(-1px);
 }
 
-.legacy-splash-primary {
-  flex: 1.25;
-  color: #170d00;
-  border: 1px solid rgba(255, 194, 102, 0.55);
-  background: linear-gradient(135deg, #ffc266, #ff9900);
-  box-shadow: 0 16px 34px rgba(255, 153, 0, 0.25);
+.primary-btn {
+  width: 100%;
+  max-width: 340px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #052e16;
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.3);
 }
 
-.legacy-splash-primary:hover {
-  box-shadow: 0 18px 42px rgba(255, 153, 0, 0.34);
+.primary-btn:hover {
+  box-shadow: 0 18px 44px rgba(34, 197, 94, 0.42);
 }
 
-.legacy-splash-secondary {
-  flex: 1;
-  color: #f8fafc;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(30, 24, 18, 0.96);
-}
-
-.legacy-splash-secondary:hover {
-  background: rgba(46, 30, 18, 0.98);
-}
-
-.legacy-splash-footer {
-  margin: 22px 0 0;
-  color: #a8a29e;
+.splash-footer {
+  margin: 24px 0 0;
+  color: #94a3b8;
   font-size: 13px;
-  line-height: 1.45;
   text-align: center;
 }
 
 @media (max-width: 560px) {
-  .legacy-splash-page {
+  .splash-page {
     padding: 16px;
     align-items: stretch;
   }
 
-  .legacy-splash-card {
-    margin: auto 0;
-    padding: 26px 21px;
+  .splash-card {
+    padding: 28px 22px;
     border-radius: 24px;
+    margin: auto 0;
   }
 
-  .legacy-splash-actions {
-    flex-direction: column;
+  .splash-card h1 {
+    font-size: 31px;
   }
 
-  .legacy-splash-actions button {
+  .splash-main-text {
+    font-size: 16px;
+  }
+
+  .splash-actions button {
     width: 100%;
   }
-}
-.single-action {
-  justify-content: center;
-}
-
-.single-action .primary-btn {
-  flex: unset;
-  width: 100%;
-  max-width: 320px;
 }
