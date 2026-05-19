@@ -148,3 +148,12 @@
     width: 100%;
   }
 }
+.single-action {
+  justify-content: center;
+}
+
+.single-action .primary-btn {
+  flex: unset;
+  width: 100%;
+  max-width: 320px;
+}
