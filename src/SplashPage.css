@@ -149,3 +149,19 @@
     width: 100%;
   }
 }
+.legacy-splash-secondary {
+  display: block;
+  margin: 14px auto 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a8a29e;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.legacy-splash-secondary:hover {
+  color: #f8fafc;
+}
